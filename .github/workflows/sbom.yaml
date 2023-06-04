@@ -1,0 +1,52 @@
+name: SBOM
+on:
+  push:
+    branches:
+      - main
+jobs:
+  sbom:
+    name: Generate and store artifact
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - uses: anchore/sbom-action@v0
+        with:
+          format: cyclonedx-json
+          artifact-name: sbom.cyclonedx.json
+
+      - name: Keep SBOM File for Signing
+        uses: actions/download-artifact@v3
+        with:
+          name: sbom.cyclonedx.json
+
+      - uses: sigstore/cosign-installer@c3667d99424e7e6047999fb6246c0da843953c65 # v3.0.1
+        with:
+          cosign-release: 'v1.13.1'
+
+      - name: Keyless SBOM File Signing
+        run: |
+          cosign --timeout 90s sign-blob --output-certificate certificate --output-signature signature sbom.cyclonedx.json
+        env:
+          COSIGN_EXPERIMENTAL: 1
+
+      - name: Verify SBOM File Signature
+        run: |
+          cosign verify-blob --certificate certificate --signature signature sbom.cyclonedx.json
+        env:
+          COSIGN_EXPERIMENTAL: 1
+
+      - name: Store SBOM Signature
+        uses: actions/upload-artifact@v3
+        with:
+          name: sbom-signature
+          path: signature
+
+      - name: Store SBOM Certificate
+        uses: actions/upload-artifact@v3
+        with:
+          name: sbom-certificate
+          path: certificate

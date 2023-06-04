@@ -1,0 +1,87 @@
+[tool.poetry]
+name = "boostsec-scanner-mobsfscan"
+version = "1.0.0"
+description = "boostsecurity mobsfscan SARIF output converter"
+authors = []
+packages = [{ include = "boostsec/converter" }]
+include = [
+    "boostsec/converter/cli/py.typed",
+    "boostsec/converter/sarif/py.typed",
+]
+
+[tool.poetry.dependencies]
+## Automatically generated dependencies. DO NOT edit between these lines. ##
+python = "~3.10"
+## Automatically generated dependencies. DO NOT edit between these lines. ##
+typer = "^0.4.1"
+pydantic = "^1.9.1"
+
+[tool.poetry.extras]
+testing = [
+]
+
+[tool.poetry.group.dev.dependencies]
+## Automatically generated dependencies. DO NOT edit between these lines. ##
+black = "^22.10.0"
+coverage = "^6.2"
+flake8 = "^5.0.4"
+bandit = "^1.7.4"
+flake8-bandit = "^4.1.1"
+flake8-black = "^0.3.4"
+flake8-blind-except = "^0.2.1"
+flake8-broken-line = "^0.6.0"
+flake8-bugbear = "^22.10.27"
+flake8-builtins = "^2.0.1"
+flake8-eradicate = "^1.4.0"
+flake8-docstrings = "^1.6.0"
+flake8-comprehensions = "^3.10.1"
+flake8-isort = "^5.0.0"
+flake8-logging-format = "^0.8.1"
+flake8-pytest-style = "^1.6.0"
+isort = "^5.10.1"
+mypy = "^0.991"
+pep8-naming = "^0.12.1"
+pytest = "^7.0.1"
+pytest-cov = "^3.0.0"
+## Automatically generated dependencies. DO NOT edit between these lines. ##
+pytest-asyncio = "^0.18.3"
+python-on-whales = "^0.47.0"
+datamodel-code-generator = {extras = ["http"], version = "^0.13.0"}
+pydantic-factories = "^1.3.0"
+PyYAML = "^6.0"
+types-PyYAML = "^6.0.4"
+
+[tool.poetry.scripts]
+boost-convert-mobsfscan = "boostsec.converter.cli.app:create_app"
+
+[tool.black]
+target-version = ['py310']
+
+[tool.coverage.report]
+omit = ["alembic/*"]
+exclude_lines = [
+    "#\\s*(pragma|PRAGMA)[:\\s]?\\s*(no|NO)\\s*(cover|COVER)",
+    "if TYPE_CHECKING:",
+]
+
+[tool.mypy]
+namespace_packages=true
+explicit_package_bases=true
+strict=true
+show_error_codes=true
+
+[tool.isort]
+profile = "black"
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+# Disable anyio to avoid conflict and force asyncio to load before entrypoints
+# https://docs.pytest.org/en/6.2.x/writing_plugins.html#plugin-discovery-order-at-tool-startup
+addopts = ["-p", "no:anyio", "-p", "asyncio"]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
+[build-system]
+# https://github.com/python-poetry/poetry/issues/4983
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
