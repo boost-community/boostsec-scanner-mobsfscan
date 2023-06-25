@@ -2,15 +2,13 @@
 import re
 import sys
 from pathlib import Path
-from typing import Optional
 
 import typer
 from pydantic import ValidationError
 
 from boostsec.converter.sarif.base import ReportingDescriptor, SarifLog
 from boostsec.converter.sarif.mobsfscan_sast import (
-    CWE_ALLOW_LIST,
-    DEFAULT_RULE_KEY,
+    UNKNOWN_CWE_ID,
     MobsfscanCweSastTaxa,
     append_sast_taxonomy,
 )
@@ -64,7 +62,7 @@ def process_mobsfscan_sarif(document: str) -> SarifLog:
     results = run.results if run.results else []
 
     rules_map: dict[str, ReportingDescriptor] = {rule.id: rule for rule in rules}
-    rule_to_cwe_memo: dict[str, Optional[str]] = {}
+    rule_to_cwe_memo: dict[str, str] = {}
     rules_idxs: dict[str, int] = {}
 
     for idx, rule in enumerate(rules):
@@ -86,7 +84,7 @@ def process_mobsfscan_sarif(document: str) -> SarifLog:
         used_rules.add(rule_id)
 
         # retrieve the CWE and related taxa
-        cwe_id = rule_to_cwe_memo.get(rule_id, DEFAULT_RULE_KEY)
+        cwe_id = rule_to_cwe_memo.get(rule_id, UNKNOWN_CWE_ID)
         taxa = MobsfscanCweSastTaxa.find_taxa_by_cwe_id(cwe_id)
         used_mapped_rules.add(taxa)
 
@@ -104,26 +102,19 @@ def process_mobsfscan_sarif(document: str) -> SarifLog:
     return sarif_log
 
 
-def memoize_cwe_for_rule(
-    rule: ReportingDescriptor, memo: dict[str, Optional[str]]
-) -> None:
+def memoize_cwe_for_rule(rule: ReportingDescriptor, memo: dict[str, str]) -> None:
     """Memoizes the allowed CWE, if any for a given rule."""
     if not (rule.properties and rule.properties.tags):
-        memo[rule.id] = DEFAULT_RULE_KEY
+        memo[rule.id] = UNKNOWN_CWE_ID
         return
 
-    rule_cwe_list = [
-        cwe_id
-        for cwe_id in (
-            f"CWE-{raw_cwe.group(1).lstrip('0')}"
-            for raw_cwe in (
-                MOBSFSCAN_RULE_TAG_CWE_REGEXP.search(tag) for tag in rule.properties.tags
-            )
-            if raw_cwe is not None
-        )
-        if cwe_id in CWE_ALLOW_LIST
-    ]
-    memo[rule.id] = rule_cwe_list[0] if rule_cwe_list else DEFAULT_RULE_KEY
+    rule_cwe_list = []
+    for tag in rule.properties.tags:
+        raw_cwe = MOBSFSCAN_RULE_TAG_CWE_REGEXP.search(tag)
+        if raw_cwe is not None:
+            cwe_id = f"CWE-{raw_cwe.group(1).lstrip('0')}"
+            rule_cwe_list.append(cwe_id)
+    memo[rule.id] = rule_cwe_list[0] if rule_cwe_list else UNKNOWN_CWE_ID
 
 
 FIELDS_TO_KEEP = ["id", "relationships"]

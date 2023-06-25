@@ -11,9 +11,7 @@ from boostsec.converter.sarif.boostsec import (
 )
 from boostsec.converter.sarif.mobsfscan_sast import (
     BOOST_SAST_TAXONOMY_NAME,
-    CWE_ALLOW_LIST,
-    DEFAULT_RULE,
-    DEFAULT_RULE_KEY,
+    UNKNOWN_CWE_ID,
     MobsfscanCweSastTaxa,
     MobsfscanCweType,
 )
@@ -26,14 +24,28 @@ faker = Faker()
     [
         (
             "CWE-22",
-            CWE_ALLOW_LIST.get("CWE-22"),
+            {
+                "cwe_id": "CWE-22",
+                "confidence": BoostFindingConfidence.NOT_SET,
+                "severity": BoostFindingSeverity.NOT_SET,
+            },
         ),
         (
             "kartoffel",
-            DEFAULT_RULE,
+            {
+                "cwe_id": "kartoffel",
+                "confidence": BoostFindingConfidence.NOT_SET,
+                "severity": BoostFindingSeverity.NOT_SET,
+            },
         ),
-        (DEFAULT_RULE_KEY, DEFAULT_RULE),
-        (None, DEFAULT_RULE),
+        (
+            UNKNOWN_CWE_ID,
+            {
+                "cwe_id": UNKNOWN_CWE_ID,
+                "confidence": BoostFindingConfidence.NOT_SET,
+                "severity": BoostFindingSeverity.NOT_SET,
+            },
+        ),
     ],
 )
 def test_find_taxa_by_cwe_id(cwe_id: str, expected: MobsfscanCweType) -> None:
@@ -108,9 +120,8 @@ def test_equality_not_implemented() -> None:
 def _mobsfscan_cwe_sast_taxa_factory() -> MobsfscanCweSastTaxa:
     return MobsfscanCweSastTaxa(
         cwe=MobsfscanCweType(
-            confidence=random.choice(list(BoostFindingConfidence)),
             cwe_id=faker.pystr(),
-            cwe_title=faker.pystr(),
             severity=random.choice(list(BoostFindingSeverity)),
+            confidence=random.choice(list(BoostFindingConfidence)),
         )
     )
