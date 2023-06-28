@@ -1,0 +1,62 @@
+#
+# Variables
+#
+DOCKER_REGISTRY ?= public.ecr.aws/boostsecurityio
+DOCKER_IMAGE    ?= ${PROJECT_NAME}
+DOCKER_CONTEXT  ?= ${PROJECT_ROOT}
+
+ifneq ($(CI),)
+  DOCKER_URL  ?= ${DOCKER_REGISTRY}/${DOCKER_IMAGE}
+  DOCKER_TAG  ?= $(shell echo ${CIRCLE_SHA1} | head -c 7)
+else
+  DOCKER_URL  ?= ${DOCKER_IMAGE}
+  DOCKER_TAG  ?= devel
+endif
+
+#
+# Additional Help
+#
+define HELP_PREFIX_DOCKER
+	$(HELP_PREFIX)
+	@printf "  \033[36m%-15s\033[0m %-35s %s\n" "DOCKER_URL" "docker image name" "${DOCKER_URL}"
+	@printf "  \033[36m%-15s\033[0m %-35s %s\n" "DOCKER_TAG" "docker image tag" "${DOCKER_TAG}"
+endef
+
+HELP_PREFIX := $(HELP_PREFIX_DOCKER)
+
+#
+# Exports
+#
+export DOCKER_BUILDKIT ?= 1
+
+#
+# Targets
+#
+docker.build: ## Docker image build
+docker.build: .phony
+ifeq ($(GITHUB_TOKEN),)
+	docker build --ssh default --tag ${DOCKER_URL}:${DOCKER_TAG} ${DOCKER_CONTEXT}
+else
+	docker build --secret id=GITHUB_TOKEN --ssh default --tag ${DOCKER_URL}:${DOCKER_TAG} ${DOCKER_CONTEXT}
+endif
+
+docker.echo.tag: ## Docker tag echoed to stdout
+docker.echo.tag:
+	@echo ${DOCKER_URL}:${DOCKER_TAG}
+
+docker.push:  ## Docker image push
+docker.push:  .phony
+	docker push ${DOCKER_URL}:${DOCKER_TAG}
+
+docker.clean:  ## Remove the project's containers, all=true for all containers
+ifeq ($(all),true)
+docker.clean: filter = "label=BOOSTSEC=true"
+else
+docker.clean: filter = "name=scanner-mobsfscan-"
+endif
+docker.clean:  .phony
+	container=$$(docker ps --filter $(filter) -q -a) \
+	&& (test -z "$${container}" \
+	|| (volumes=$$(docker inspect -f '{{range .Mounts}}{{.Name}} {{end}}' $${container}) || true \
+	&& docker rm -f $${container} \
+	&& (test -z "$${volumes}" || docker volume rm -f $${volumes})))

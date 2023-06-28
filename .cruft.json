@@ -1,0 +1,17 @@
+{
+  "template": "git@github.com:boostsecurityio/boostsec-project-template.git",
+  "commit": "18002666d89b96cce96f498e48851e1397a8595c",
+  "checkout": null,
+  "context": {
+    "cookiecutter": {
+      "project_slug": "boostsec-scanner-mobsfscan",
+      "project_description": "Boostsec mobsfscan Scanner",
+      "namespace": "boostsec",
+      "module": "scanner_mobsfscan",
+      "use_argocd": "n",
+      "use_docker": "y",
+      "_template": "git@github.com:boostsecurityio/boostsec-project-template.git"
+    }
+  },
+  "directory": null
+}
