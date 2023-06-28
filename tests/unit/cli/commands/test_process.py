@@ -23,7 +23,7 @@ from boostsec.converter.sarif.base import (
 )
 from boostsec.converter.sarif.mobsfscan_sast import (
     BOOST_SAST_TAXONOMY_NAME,
-    DEFAULT_RULE_KEY,
+    UNKNOWN_CWE_ID,
 )
 
 SnykDataT = dict[str, Any]
@@ -189,9 +189,9 @@ def test_cleanup(report: ReportingDescriptor) -> None:
             ],
             "CWE-915",
         ),
-        (["OWASP-A1: Injection"], DEFAULT_RULE_KEY),
-        ([], DEFAULT_RULE_KEY),
-        (None, DEFAULT_RULE_KEY),
+        (["OWASP-A1: Injection"], UNKNOWN_CWE_ID),
+        ([], UNKNOWN_CWE_ID),
+        (None, UNKNOWN_CWE_ID),
     ],
 )
 def test_memoize_cwe_for_rule(
@@ -202,7 +202,7 @@ def test_memoize_cwe_for_rule(
         id=faker.pystr(),
         properties=PropertyBag(tags=tags) if tags else None,
     )
-    memo: dict[str, Optional[str]] = {}
+    memo: dict[str, str] = {}
 
     memoize_cwe_for_rule(rule, memo)
 
